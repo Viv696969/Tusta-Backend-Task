@@ -1,0 +1,7 @@
+{
+    "email":"abc@gmail.com",
+    "period":12,
+    "buyThreshold":30,
+    "sellThreshold":70,
+    "companyIndex":4
+}
