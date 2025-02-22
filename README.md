@@ -15,12 +15,13 @@ python main.py
 ```
 ### Folder Structure
 ```bash
-|   app
+|_
+  app
     │   main.py
     |   trading.py
     |   config.json
 │   README.md
-│   trade-log-RSI-chouhanvivek207@gmail.com-BAJFINANCE.NS.txt
+│   sample-backtested-trade-logs.txt
 ```
 
 ## Code Structure
