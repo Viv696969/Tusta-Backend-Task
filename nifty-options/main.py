@@ -47,7 +47,6 @@ def getNearestExpiry(df:pd.DataFrame,datetime):
     
     return sorted_expiries[idx] if idx < len(sorted_expiries) else None
     
-
 def filterDataByMomentum(df:pd.DataFrame,momentum)->pd.DataFrame:
     # if momentum == 0:
     #     return df
@@ -124,7 +123,7 @@ def backtest(trade_time,moneyness,right,end_time,exclude_days,momentum=0,target=
     print("Total Time taken process data based on inputs =",time()-st)
 
     def processRow(row):
-        start_time=time()
+        # start_time=time()
         spot_price = row.close
         nearest_expiry = getNearestExpiry(df_nifty_options, row.datetime)
         
@@ -146,10 +145,9 @@ def backtest(trade_time,moneyness,right,end_time,exclude_days,momentum=0,target=
         trade_logs = []
 
         while remaining_reentries >= 0:
-            nearest_expiry_df = nearest_expiry_df_without_strike[
-                (nearest_expiry_df_without_strike.datetime >= exit_time) &
-                (nearest_expiry_df_without_strike.strike_price == selected_strike)
-            ]
+            mask = (nearest_expiry_df_without_strike["datetime"] >= exit_time) & (nearest_expiry_df_without_strike["strike_price"] == selected_strike)
+
+            nearest_expiry_df = nearest_expiry_df_without_strike.loc[mask]
 
             if nearest_expiry_df.empty:break
 
@@ -186,25 +184,29 @@ def backtest(trade_time,moneyness,right,end_time,exclude_days,momentum=0,target=
             trade_logs.append(trade_log)
 
             if continueReEntry(exit_reason_value, re_entry, remaining_reentries):
-                selected_strike = df_data_nifty[df_data_nifty.datetime == exit_time].selected_strike.iloc[0]
+                # selected_strike = df_data_nifty[df_data_nifty.datetime == exit_time].selected_strike.iloc[0]
+                mask = df_data_nifty["datetime"] == exit_time
+                row = df_data_nifty.loc[mask, "selected_strike"]
+
+                selected_strike = row.values[0] if not row.empty else None
             else:break
             
             remaining_reentries -= 1
 
-        print("Execution Time : ",time()-start_time)
+        # print("Execution Time : ",time()-start_time)
         return trade_logs
     
-    print("Total Time taken before processing rows =",time()-st)
-    stn=time()
+    # print("Total Time taken before processing rows =",time()-st)
+    # stn=time()
     trades = df_data_nifty_time_based.apply(processRow, axis=1).dropna().explode().tolist()
-    print("Total Time taken for processing all rows =",time()-stn)
+    # print("Total Time taken for processing all rows =",time()-stn)
 
-    stn_new=time()
+    # stn_new=time()
     trades_df=pd.DataFrame(trades)
-    print("time taken to convert trade to pandas = ",time()-stn_new)
+    # print("time taken to convert trade to pandas = ",time()-stn_new)
     print("Total Time taken=",time()-st)
     return trades_df
 
 
-df=backtest(trade_time="9:30:00",moneyness=2,right="Call",end_time="15:30:00",exclude_days=["Monday","Friday"],momentum=6,target=10,stop_loss=-5,re_entry="Target", max_reentries=3)
+df=backtest(trade_time="9:30:00",moneyness=2,right="Call",end_time="15:30:00",exclude_days=[],momentum=6,target=10,stop_loss=-5,re_entry="Both", max_reentries=1000)
 df.to_csv("test1.csv",index=False)
